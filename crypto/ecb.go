@@ -19,6 +19,10 @@ func init() {
 	decrypter = newECBDecrypter(block)
 }
 
+func InitKey(k []byte) {
+	key = k
+}
+
 func Encrypt(plaintext []byte) ([]byte, error) {
 	//block, err := aes.NewCipher(key)
 	//if err != nil {
