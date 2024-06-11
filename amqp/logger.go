@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"gitee.com/cronusq/golib/amqp/logger"
+	"github.com/cronusqiu90/golib/amqp/logger"
 )
 
 // Logger is describes a logging structure. It can be set using

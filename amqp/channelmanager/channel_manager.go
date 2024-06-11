@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"gitee.com/cronusq/golib/amqp/connectionmanager"
-	"gitee.com/cronusq/golib/amqp/dispatcher"
-	"gitee.com/cronusq/golib/amqp/logger"
+	"github.com/cronusqiu90/golib/amqp/connectionmanager"
+	"github.com/cronusqiu90/golib/amqp/dispatcher"
+	"github.com/cronusqiu90/golib/amqp/logger"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 

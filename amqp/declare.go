@@ -1,7 +1,7 @@
 package rabbitmq
 
 import (
-	"gitee.com/cronusq/golib/amqp/channelmanager"
+	"github.com/cronusqiu90/golib/amqp/channelmanager"
 )
 
 func declareQueue(chanManager *channelmanager.ChannelManager, options QueueOptions) error {

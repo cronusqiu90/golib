@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"gitee.com/cronusq/golib/amqp/channelmanager"
+	"github.com/cronusqiu90/golib/amqp/channelmanager"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 

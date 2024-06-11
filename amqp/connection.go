@@ -1,7 +1,7 @@
 package rabbitmq
 
 import (
-	"gitee.com/cronusq/golib/amqp/connectionmanager"
+	"github.com/cronusqiu90/golib/amqp/connectionmanager"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
