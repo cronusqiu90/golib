@@ -7,20 +7,14 @@ import (
 )
 
 var (
-	key = []byte("")
-
 	encrypter cipher.BlockMode
 	decrypter cipher.BlockMode
 )
 
-func init() {
+func InitKey(key []byte) {
 	block, _ := aes.NewCipher(key)
 	encrypter = newECBEncrypter(block)
 	decrypter = newECBDecrypter(block)
-}
-
-func InitKey(k []byte) {
-	key = k
 }
 
 func Encrypt(plaintext []byte) ([]byte, error) {
