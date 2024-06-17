@@ -1,9 +1,8 @@
 module github.com/cronusqiu90/golib
 
-go 1.22.1
+go 1.20
 
 require (
-	gitee.com/cronusq/golib v0.0.0-20240611050021-2cb38e515adb
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/sirupsen/logrus v1.9.3
 )
