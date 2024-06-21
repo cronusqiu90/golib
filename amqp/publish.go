@@ -320,6 +320,23 @@ func (publisher *Publisher) NotifyPublish(handler func(p Confirmation)) {
 	}
 }
 
+func (publisher *Publisher) EnsureQueue(options QueueOptions, binding Binding) error {
+	if err := declareQueue(publisher.chanManager, options); err != nil {
+		return err
+	}
+
+	if err := publisher.chanManager.QueueBindSafe(
+		options.Name,
+		binding.RoutingKey,
+		publisher.options.ExchangeOptions.Name,
+		binding.NoWait,
+		tableToAMQPTable(binding.Args),
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (publisher *Publisher) startReturnHandler() {
 	publisher.handlerMux.Lock()
 	if publisher.notifyReturnHandler == nil {
