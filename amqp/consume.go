@@ -124,6 +124,23 @@ func (consumer *Consumer) Close() {
 	}()
 }
 
+// GetRemainMessageCount get the number of unconsumed messages
+// in the current consumption queue.
+func (consumer *Consumer) GetRemainMessageCount() (int, error) {
+	q, err := consumer.chanManager.QueueDeclarePassiveSafe(
+		consumer.options.QueueOptions.Name,
+		consumer.options.QueueOptions.Durable,
+		consumer.options.QueueOptions.AutoDelete,
+		consumer.options.QueueOptions.Exclusive,
+		consumer.options.QueueOptions.NoWait,
+		tableToAMQPTable(consumer.options.QueueOptions.Args),
+	)
+	if err != nil {
+		return 0, err
+	}
+	return q.Messages, nil
+}
+
 // startGoroutines declares the queue if it doesn't exist,
 // binds the queue to the routing key(s), and starts the goroutines
 // that will consume from the queue
