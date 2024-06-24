@@ -3,61 +3,202 @@ package log
 import (
 	"bytes"
 	"fmt"
-	"github.com/sirupsen/logrus"
+	"io"
 	"os"
-	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
+	"time"
 )
 
-type CustomFormatter struct {
-	logrus.TextFormatter
+var DefaultWriter = os.Stdout
+
+type Writer interface {
+	WriteLog([]byte, Level, time.Time) (n int, err error)
 }
 
-var (
-	defaultTimeFormatter = "2006/01/02 15:04:05"
-	stringBufferPool     = sync.Pool{
-		New: func() any {
-			return new(bytes.Buffer)
-		},
+type Logger struct {
+	outMu sync.Mutex
+	out   io.Writer
+
+	level         Level
+	callerEnabled bool
+	callerSkip    int
+}
+
+func New(opts ...Option) *Logger {
+	l := &Logger{}
+	for _, opt := range opts {
+		opt.apply(l)
 	}
-)
-
-func init() {
-	logrus.SetReportCaller(true)
-	logrus.SetLevel(logrus.InfoLevel)
-	logrus.SetOutput(os.Stdout)
-	logrus.SetFormatter(&CustomFormatter{})
+	if l.out == nil {
+		l.out = DefaultWriter
+	}
+	if l.level == 0 {
+		l.level = InfoLevel
+	}
+	return l
 }
 
-func SetLevel(level logrus.Level) {
-	logrus.SetLevel(level)
+func (l *Logger) WithOptions(opts ...Option) *Logger {
+	c := l.clone()
+	for _, opt := range opts {
+		opt.apply(c)
+	}
+	return c
 }
 
-func (f *CustomFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	buffer := stringBufferPool.Get().(*bytes.Buffer)
+func (l *Logger) clone() *Logger {
+	clone := &Logger{
+		out:           l.out,
+		level:         l.level,
+		callerEnabled: l.callerEnabled,
+		callerSkip:    l.callerSkip,
+	}
+	return clone
+}
+
+func (l *Logger) Trace(args ...interface{}) {
+	l.log(TraceLevel, 0, "", args...)
+}
+
+func (l *Logger) Debug(args ...interface{}) {
+	l.log(DebugLevel, 0, "", args...)
+}
+
+func (l *Logger) Info(args ...interface{}) {
+	l.log(InfoLevel, 0, "", args...)
+}
+
+func (l *Logger) Warn(args ...interface{}) {
+	l.log(WarnLevel, 0, "", args...)
+}
+
+func (l *Logger) Error(args ...interface{}) {
+	l.log(ErrorLevel, 0, "", args...)
+}
+
+func (l *Logger) Log(level Level, offset int, args ...interface{}) {
+	l.log(level, offset, "", args...)
+}
+
+func (l *Logger) Tracef(msg string, args ...interface{}) {
+	l.log(TraceLevel, 0, msg, args...)
+}
+
+func (l *Logger) Debugf(msg string, args ...interface{}) {
+	l.log(DebugLevel, 0, msg, args...)
+}
+
+func (l *Logger) Infof(msg string, args ...interface{}) {
+	l.log(InfoLevel, 0, msg, args...)
+}
+
+func (l *Logger) Warnf(msg string, args ...interface{}) {
+	l.log(WarnLevel, 0, msg, args...)
+}
+
+func (l *Logger) Errorf(msg string, args ...interface{}) {
+	l.log(ErrorLevel, 0, msg, args...)
+}
+
+func (l *Logger) Logf(level Level, offset int, msg string, args ...interface{}) {
+	l.log(level, offset, msg, args...)
+}
+
+func (l *Logger) log(level Level, offset int, msg string, args ...interface{}) {
+	if !l.level.Enabled(level) {
+		return
+	}
+	when := time.Now()
+	buffer := bytesBufferPool.Get().(*bytes.Buffer)
 	defer func() {
 		buffer.Reset()
-		stringBufferPool.Put(buffer)
+		bytesBufferPool.Put(buffer)
 	}()
 
-	// 2006/01/02 15:04:05 [info] [main.go:400]
-	buffer.WriteString(
-		fmt.Sprintf("%s [%s] ",
-			entry.Time.Format(defaultTimeFormatter),
-			strings.ToUpper(entry.Level.String()),
-		),
-	)
-	if entry.HasCaller() {
-		fileBaseName := entry.Caller.File
-		fileName := strings.TrimSuffix(fileBaseName, filepath.Ext(fileBaseName))
-		buffer.WriteString(
-			fmt.Sprintf("[%s:%d] ",
-				fileName,
-				entry.Caller.Line,
-			),
-		)
+	timeHeaderBuf := make([]byte, 23)
+	_, _ = formatTimeHeader(when, timeHeaderBuf)
+
+	buffer.Write(timeHeaderBuf)
+	buffer.WriteByte(' ')
+	buffer.WriteString(level.LogPrefix())
+	buffer.WriteByte(' ')
+
+	if l.callerEnabled {
+		buffer.WriteString(getCallerPrefix(3 + l.callerSkip + offset))
+		buffer.WriteByte(' ')
 	}
-	buffer.WriteString(fmt.Sprintf("%s\n", entry.Message))
-	return buffer.Bytes(), nil
+
+	buffer.WriteString(getMessage(msg, args))
+	buffer.WriteByte('\n')
+
+	if lw, ok := l.out.(Writer); ok {
+		l.outMu.Lock()
+		defer l.outMu.Unlock()
+		_, _ = lw.WriteLog(buffer.Bytes(), level, when)
+		return
+	}
+	l.outMu.Lock()
+	defer l.outMu.Unlock()
+	_, _ = l.out.Write(buffer.Bytes())
+}
+
+func getMessage(template string, fmtArgs []interface{}) string {
+	if len(fmtArgs) == 0 {
+		return template
+	}
+
+	if template != "" {
+		return fmt.Sprintf(template, fmtArgs...)
+	}
+
+	if len(fmtArgs) == 1 {
+		if str, ok := fmtArgs[0].(string); ok {
+			return str
+		}
+	}
+	return fmt.Sprint(fmtArgs...)
+}
+
+func getCallerPrefix(skip int) string {
+	_, file, line, ok := runtime.Caller(skip)
+	if !ok {
+		file = "???"
+		line = 0
+	}
+	return "[" + trimmedPath(file, line) + "]"
+}
+
+func fullPath(path string, line int) string {
+	buf := getBuffer()
+	defer putBuffer(buf)
+	*buf = append(*buf, path...)
+	*buf = append(*buf, ':')
+	itoa(buf, line, -1)
+	return string(*buf)
+}
+
+func trimmedPath(path string, line int) string {
+	idx := strings.LastIndexByte(path, '/')
+	if idx == -1 {
+		return fullPath(path, line)
+	}
+	// Find the penultimate separator.
+	idx = strings.LastIndexByte(path[:idx], '/')
+	if idx == -1 {
+		return fullPath(path, line)
+	}
+	buf := getBuffer()
+	defer putBuffer(buf)
+
+	caller := path[idx+1:]
+	if strings.HasSuffix(caller, ".go") {
+		caller = strings.ReplaceAll(caller, ".go", "")
+	}
+
+	*buf = append(*buf, caller...)
+	*buf = append(*buf, ':')
+	itoa(buf, line, -1)
+	return string(*buf)
 }
