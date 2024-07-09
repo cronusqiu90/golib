@@ -5,13 +5,13 @@ import (
 	"time"
 
 	"github.com/cronusqiu90/golib/amqp/dispatcher"
-	"github.com/cronusqiu90/golib/amqp/logger"
+	"github.com/cronusqiu90/golib/log"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // ConnectionManager -
 type ConnectionManager struct {
-	logger               logger.Logger
+	logger               *log.Logger
 	url                  string
 	connection           *amqp.Connection
 	amqpConfig           amqp.Config
@@ -23,7 +23,7 @@ type ConnectionManager struct {
 }
 
 // NewConnectionManager creates a new connection manager
-func NewConnectionManager(url string, conf amqp.Config, log logger.Logger, reconnectInterval time.Duration) (*ConnectionManager, error) {
+func NewConnectionManager(url string, conf amqp.Config, log *log.Logger, reconnectInterval time.Duration) (*ConnectionManager, error) {
 	conn, err := amqp.DialConfig(url, amqp.Config(conf))
 	if err != nil {
 		return nil, err

@@ -7,13 +7,13 @@ import (
 
 	"github.com/cronusqiu90/golib/amqp/connectionmanager"
 	"github.com/cronusqiu90/golib/amqp/dispatcher"
-	"github.com/cronusqiu90/golib/amqp/logger"
+	"github.com/cronusqiu90/golib/log"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // ChannelManager -
 type ChannelManager struct {
-	logger               logger.Logger
+	logger               *log.Logger
 	channel              *amqp.Channel
 	connManager          *connectionmanager.ConnectionManager
 	channelMux           *sync.RWMutex
@@ -24,7 +24,7 @@ type ChannelManager struct {
 }
 
 // NewChannelManager creates a new connection manager
-func NewChannelManager(connManager *connectionmanager.ConnectionManager, log logger.Logger, reconnectInterval time.Duration) (*ChannelManager, error) {
+func NewChannelManager(connManager *connectionmanager.ConnectionManager, log *log.Logger, reconnectInterval time.Duration) (*ChannelManager, error) {
 	ch, err := getNewChannel(connManager)
 	if err != nil {
 		return nil, err
