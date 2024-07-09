@@ -78,6 +78,11 @@ func (l *Logger) Error(args ...interface{}) {
 	l.log(ErrorLevel, 0, "", args...)
 }
 
+func (l *Logger) Fatal(args ...interface{}) {
+	l.log(ErrorLevel, 0, "", args...)
+	os.Exit(1)
+}
+
 func (l *Logger) Log(level Level, offset int, args ...interface{}) {
 	l.log(level, offset, "", args...)
 }
@@ -100,6 +105,11 @@ func (l *Logger) Warnf(msg string, args ...interface{}) {
 
 func (l *Logger) Errorf(msg string, args ...interface{}) {
 	l.log(ErrorLevel, 0, msg, args...)
+}
+
+func (l *Logger) Fatalf(msg string, args ...interface{}) {
+	l.log(ErrorLevel, 0, msg, args...)
+	os.Exit(1)
 }
 
 func (l *Logger) Logf(level Level, offset int, msg string, args ...interface{}) {

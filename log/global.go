@@ -1,5 +1,7 @@
 package log
 
+import "os"
+
 var DefaultLogger = New()
 
 func Trace(args ...interface{}) {
@@ -20,6 +22,11 @@ func Warn(args ...interface{}) {
 
 func Error(args ...interface{}) {
 	DefaultLogger.log(ErrorLevel, 0, "", args...)
+}
+
+func Fatal(args ...interface{}) {
+	DefaultLogger.log(ErrorLevel, 0, "", args...)
+	os.Exit(1)
 }
 
 func Log(level Level, offset int, args ...interface{}) {
@@ -44,6 +51,11 @@ func Warnf(msg string, args ...interface{}) {
 
 func Errorf(msg string, args ...interface{}) {
 	DefaultLogger.log(ErrorLevel, 0, msg, args...)
+}
+
+func Fatalf(msg string, args ...interface{}) {
+	DefaultLogger.log(ErrorLevel, 0, msg, args...)
+	os.Exit(1)
 }
 
 func Logf(level Level, offset int, msg string, args ...interface{}) {
