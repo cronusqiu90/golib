@@ -1,12 +1,15 @@
 package rabbitmq
 
-import amqp "github.com/rabbitmq/amqp091-go"
+import (
+	"github.com/cronusqiu90/golib/log"
+	amqp "github.com/rabbitmq/amqp091-go"
+)
 
 // PublisherOptions are used to describe a publisher's configuration.
 // Logger is a custom logging interface.
 type PublisherOptions struct {
 	ExchangeOptions ExchangeOptions
-	Logger          Logger
+	Logger          *log.Logger
 	ConfirmMode     bool
 }
 
@@ -24,7 +27,7 @@ func getDefaultPublisherOptions() PublisherOptions {
 			Args:       Table{},
 			Declare:    false,
 		},
-		Logger:      stdDebugLogger{},
+		Logger:      log.DefaultLogger,
 		ConfirmMode: false,
 	}
 }
@@ -32,12 +35,12 @@ func getDefaultPublisherOptions() PublisherOptions {
 // WithPublisherOptionsLogging sets logging to true on the publisher options
 // and sets the
 func WithPublisherOptionsLogging(options *PublisherOptions) {
-	options.Logger = &stdDebugLogger{}
+	options.Logger = log.DefaultLogger
 }
 
 // WithPublisherOptionsLogger sets logging to a custom interface.
 // Use WithPublisherOptionsLogging to just log to stdout.
-func WithPublisherOptionsLogger(log Logger) func(options *PublisherOptions) {
+func WithPublisherOptionsLogger(log *log.Logger) func(options *PublisherOptions) {
 	return func(options *PublisherOptions) {
 		options.Logger = log
 	}

@@ -1,11 +1,15 @@
 package rabbitmq
 
-import "time"
+import (
+	"time"
+
+	"github.com/cronusqiu90/golib/log"
+)
 
 // ConnectionOptions are used to describe how a new consumer will be created.
 type ConnectionOptions struct {
 	ReconnectInterval time.Duration
-	Logger            Logger
+	Logger            *log.Logger
 	Config            Config
 }
 
@@ -13,7 +17,7 @@ type ConnectionOptions struct {
 func getDefaultConnectionOptions() ConnectionOptions {
 	return ConnectionOptions{
 		ReconnectInterval: time.Second * 5,
-		Logger:            stdDebugLogger{},
+		Logger:            log.DefaultLogger,
 		Config:            Config{},
 	}
 }
@@ -28,12 +32,12 @@ func WithConnectionOptionsReconnectInterval(interval time.Duration) func(options
 // WithConnectionOptionsLogging sets logging to true on the consumer options
 // and sets the
 func WithConnectionOptionsLogging(options *ConnectionOptions) {
-	options.Logger = stdDebugLogger{}
+	options.Logger = log.DefaultLogger
 }
 
 // WithConnectionOptionsLogger sets logging to true on the consumer options
 // and sets the
-func WithConnectionOptionsLogger(log Logger) func(options *ConnectionOptions) {
+func WithConnectionOptionsLogger(log *log.Logger) func(options *ConnectionOptions) {
 	return func(options *ConnectionOptions) {
 		options.Logger = log
 	}

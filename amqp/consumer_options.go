@@ -1,7 +1,7 @@
 package rabbitmq
 
 import (
-	"github.com/cronusqiu90/golib/amqp/logger"
+	"github.com/cronusqiu90/golib/log"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -28,7 +28,7 @@ func getDefaultConsumerOptions(queueName string) ConsumerOptions {
 		},
 		ExchangeOptions: []ExchangeOptions{},
 		Concurrency:     1,
-		Logger:          stdDebugLogger{},
+		Logger:          log.DefaultLogger,
 		QOSPrefetch:     10,
 		QOSGlobal:       false,
 	}
@@ -66,7 +66,7 @@ type ConsumerOptions struct {
 	QueueOptions          QueueOptions
 	ExchangeOptions       []ExchangeOptions
 	Concurrency           int
-	Logger                logger.Logger
+	Logger                *log.Logger
 	QOSPrefetch           int
 	QOSGlobal             bool
 }
@@ -284,12 +284,12 @@ func WithConsumerOptionsConsumerNoWait(options *ConsumerOptions) {
 
 // WithConsumerOptionsLogging uses a default logger that writes to std out
 func WithConsumerOptionsLogging(options *ConsumerOptions) {
-	options.Logger = &stdDebugLogger{}
+	options.Logger = log.DefaultLogger
 }
 
 // WithConsumerOptionsLogger sets logging to a custom interface.
 // Use WithConsumerOptionsLogging to just log to stdout.
-func WithConsumerOptionsLogger(log logger.Logger) func(options *ConsumerOptions) {
+func WithConsumerOptionsLogger(log *log.Logger) func(options *ConsumerOptions) {
 	return func(options *ConsumerOptions) {
 		options.Logger = log
 	}
